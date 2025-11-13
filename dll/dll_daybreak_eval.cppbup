@@ -1,0 +1,63 @@
+#define WINVER 0x0600
+#define _WIN32_WINNT 0x0600
+
+#include <windows.h>
+#include <shlwapi.h>
+#include <pathcch.h>
+#include "newlisp.h" // termios.h is wrapped in unix header with -DWINDOWS
+
+typedef LPSTR (__stdcall *newlisp_eval_t)(LPSTR code);
+
+HMODULE newlisp_handle = NULL;
+newlisp_eval_t newlisp_eval = NULL;
+
+void melt_error(const char* message) {
+  MessageBox(NULL, message, "Error!", MB_OK);
+  exit(0);
+}
+
+BOOL load_newlisp(LPCWSTR path) {
+  newlisp_handle = LoadLibraryW(path);
+  if (!newlisp_handle) melt_error("Load: could not load newlisp.dll!");
+
+  newlisp_eval = (newlisp_eval_t)GetProcAddress(newlisp_handle, "newlispEvalStr");
+
+  if (!newlisp_eval) {
+    char err[400];
+    sprintf(err, "eval: %p\n", newlisp_eval);
+    melt_error(err);
+    FreeLibrary(newlisp_handle);
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+BOOL WINAPI DllMain(HMODULE hmodule, DWORD reason, LPVOID reserved) {
+  //WCHAR path[MAX_PATH];
+  //WCHAR final_path[MAX_PATH];
+
+  //GetModuleFileNameW(hmodule, path, MAX_PATH);
+  //PathRemoveFileSpecW(path);
+
+  //lstrcpyW(final_path, path);
+  //lstrcatW(final_path, L"\\newlisp.dll");
+
+  LPSTR out = NULL;
+
+  switch (reason) {
+    case DLL_PROCESS_ATTACH:
+      if (load_newlisp(L"D:\\users\\teegan\\fgc\\melty-scheme\\newlisp.dll") == FALSE) {
+        melt_error("Main: could not load newlisp!");
+      }
+
+      out = newlisp_eval("(load \"D:\Users\Teegan\fgc\melty-scheme\scm\server.lsp\")");
+      MessageBox(NULL, out, "test", MB_OK);
+      break;
+    default:
+      FreeLibrary(newlisp_handle);
+      break;
+  }
+
+  return TRUE;
+}

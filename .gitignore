@@ -1,4 +1,3 @@
-dll_entry*
-*.txt
-doc/
-*.pdf
+out/
+mbaa/
+crescent/
