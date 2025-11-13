@@ -13,7 +13,7 @@ for recompilation.
 Currently, only the source is available. To compile,
 
 1. Download this repository
-2. run `download_deps.sh' to download MBAACC and newLISP
+2. run `download_deps.sh` to download MBAACC and newLISP
 3. run `make all` to generate the executables
 
 Now, within the "out" folder, there is `daybreak.exe` and a daybreak folder. These
