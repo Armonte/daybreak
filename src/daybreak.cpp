@@ -1,7 +1,9 @@
-#include "daybreak.h"
+#include "daybreak.hpp"
 
 Daybreak::Daybreak() {
-
+  memset(&this->si, 0, sizeof(this->si));
+  memset(&this->pi, 0, sizeof(this->pi));
+  this->si.cb = sizeof(this->si);
 }
 
 void Daybreak::debug_msg(std::string msg) {
@@ -11,30 +13,6 @@ void Daybreak::debug_msg(std::string msg) {
 void Daybreak::die(std::string msg) {
   printf("[ERROR] %s\n", msg.c_str());
   exit(1);
-}
-
-void Daybreak::spawn_process(const char *path, Daybreak::ProcessType type) {
-  STARTUPINFOA si{};
-  PROCESS_INFORMATION pi{};
-
-  si.cb = sizeof(si);
-
-  BOOL res = FALSE;
-  if (type == Daybreak::ProcessType::NO_ARGS)
-    res = CreateProcessA((LPSTR)path, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-  else
-    res = CreateProcessA(NULL, (LPSTR)path, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-
-  if (!res) {
-    char err[50];
-    sprintf(err, "Could not start %s\n", path);
-    MessageBox(NULL, err, "Error!", MB_OK);
-    exit(1);
-  }
-
-  WaitForSingleObject(pi.hProcess, INFINITE);
-  CloseHandle(pi.hProcess);
-  CloseHandle(pi.hThread);
 }
 
 int Daybreak::find_melty() {
@@ -47,6 +25,10 @@ int Daybreak::find_melty() {
   if (proc_snapshot == INVALID_HANDLE_VALUE)
     return MELTY_NOT_FOUND;
 
+  // Take a snapshot of current processes,
+  // iterate through each item and compare
+  // the names of the processes to MBAA.exe.
+  // Return the PID if found.
   proc_melty.dwSize = sizeof(PROCESSENTRY32);
   proc_found = Process32First(proc_snapshot, &proc_melty);
   while (proc_found) {
@@ -62,9 +44,31 @@ int Daybreak::find_melty() {
   return pid;
 }
 
+void Daybreak::hook(std::string dll_path) {
+  spawn_process("MBAA.exe");
+  inject(dll_path);
+  skip_config();
+
+  ResumeThread(this->pi.hThread);
+}
+
+void Daybreak::spawn_process(const char *path) {
+  BOOL res = FALSE;
+
+  // MBAA.exe needs to be created on a suspended thread,
+  // so the skip_config injection will function correctly.
+  res = CreateProcessA((LPSTR)path, NULL, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &this->si, &this->pi);
+
+  if (!res) {
+    char err[50];
+    sprintf(err, "Could not start %s\n", path);
+    MessageBox(NULL, err, "Error!", MB_OK);
+    exit(1);
+  }
+}
+
 void Daybreak::inject(std::string dll_path) {
-  FARPROC loadlib_fx = GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "LoadLibraryW");
-  HANDLE melty_handle;
+  LPTHREAD_START_ROUTINE loadlib_fx = (LPTHREAD_START_ROUTINE)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "LoadLibraryW");
   HANDLE melty_thread;
   LPVOID buffer;
 
@@ -74,16 +78,26 @@ void Daybreak::inject(std::string dll_path) {
 
   debug_msg("Finding Melty...");
   while (!pid) pid = find_melty();
-  if (!pid) die("Could not find MBAA.exe");
-
   debug_msg("Melty PID: " + std::to_string(pid));
-  melty_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, DWORD(pid));
-  buffer = VirtualAllocEx(melty_handle, NULL, w_dll_len, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-  WriteProcessMemory(melty_handle, buffer, w_dll_path.c_str(), w_dll_len, NULL);
+
+  buffer = VirtualAllocEx(this->pi.hProcess, NULL, w_dll_len, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+  WriteProcessMemory(this->pi.hProcess, buffer, w_dll_path.c_str(), w_dll_len, NULL);
 
   DWORD tid;
-  melty_thread = CreateRemoteThread(melty_handle, 0, 0, (LPTHREAD_START_ROUTINE)loadlib_fx, buffer, 0, &tid);
+  melty_thread = CreateRemoteThread(this->pi.hProcess, 0, 0, loadlib_fx, buffer, 0, &tid);
 
-  printf("handle:%p\tthread: %p\tbuffer:%p\ttid: %ld\n", melty_handle, melty_thread, buffer, tid);
-  CloseHandle(melty_handle);
+  WaitForSingleObject(melty_thread, INFINITE);
+
+  printf("hProcess:%p\nbuffer:%p\n", this->pi.hProcess, buffer);
+  CloseHandle(melty_thread);
 }
+
+void Daybreak::skip_config() {
+  // ASM hack that rewrites a jump call, skipping the configuration menu.
+  static const char jmp1[]  = { (char)0xEB, (char)0x0E };
+  static const char jmp2[] = { (char)0xEB };
+
+  WriteProcessMemory(this->pi.hProcess, (void*)0x004A1D42, jmp1, sizeof(jmp1), 0);
+  WriteProcessMemory(this->pi.hProcess, (void*)(0x004A1D42 + 0x08), jmp2, sizeof(jmp2), 0);
+}
+

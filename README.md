@@ -1,7 +1,7 @@
 # Melty Blood: Daybreak
 
-Daybreak aims at taking the many individual utilites for Melty Blood: AACC, and make them
-available all within the game's base executable. In addition, an interactive scripting
+Daybreak aims at taking the many individual utilites for Melty Blood: AACC and making them
+available altogether inside the game's base executable. In addition, an interactive scripting
 environment is provided by the newLISP language for easy extensibility without the need
 for recompilation.
 
@@ -17,17 +17,13 @@ Currently, only the source is available. To compile,
 3. run `make all` to generate the executables
 
 Now, within the "out" folder, there is `daybreak.exe` and a daybreak folder. These
-can be copied to any installation of MBAACC, butfor easy testing, they can be placed
-in the `mbaa/` folder. This can be done either manually, or with the following command:
-
-`make test`
-
-This will automatically place them in the folder, and it will also run the program.
+can be copied to any installation of MBAACC, but for easy testing, they are automatically
+placed in the `mbaa/` folder. 
 
 ## Usage
 
-Either by double-clicking `daybreak.exe` or running it in the command line, it will automatically
-open MBAACC with everything preloaded.
+Either by double-clicking `daybreak.exe`, running it in the command line, or typing `make test` 
+MBAACC will automatically open with all modules preloaded.
 
 ## Hacking & Modification
 
@@ -35,4 +31,12 @@ This project is dependent only on MinGW32. No UCRT or MSVC binaries or tools are
 development or compilation of Daybreak. Installing [MSYS2](https://www.msys2.org/)
 and the x86 gcc/g++ toolchain are the only requirements to get it working properly. 
 
-*The newLISP server provided in Daybreak listens to `localhost:8080`, and is currently hardcoded to listen here.*
+*The newLISP server provided in Daybreak listens to `localhost:25565`, and is currently hardcoded to listen here.*
+*client.lsp and its compiled client.exe will automatically look for this address and connect to each other.*
+
+## Roadmap
+
+- Write text inside of Melty
+- Contain the newLISP client inside of Melty (open/closing by pressing a button combination)
+- Controller mappings
+- button test menu
