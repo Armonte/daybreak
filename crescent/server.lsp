@@ -1,5 +1,4 @@
 ;;;;
-;;;;
 ;;;; server.lsp
 ;;;; By: tougafgc
 ;;;; Date: 22 November 2025
@@ -13,6 +12,8 @@
 (import "kernel32.dll" "GetCurrentProcess")
 (import "kernel32.dll" "GetCurrentProcessId")
 (import "kernel32.dll" "ReadProcessMemory")
+
+(import "user32.dll" "MessageBoxA")
 
 ;;; GLOBAL VARIABLES
 (define *server* 'NO-SERVER)
@@ -50,5 +51,15 @@
   (net-close *server*)
   (exit 0))
 
+;;; KEYBOARD FUNCTIONS
+(define (debug-msg str)
+  (MessageBoxA 0 str "newLISP Debug" 0))
+
+(define (handle-controller-menu)
+  (debug-msg "CTRL + K pressed!"));
+
 ;; Automatically start the server on startup.
+;; TODO - if the server shuts down, any key press
+;; detected by the keyboard thread in C++ land
+;; will crash the game.
 (start-server)

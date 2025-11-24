@@ -14,6 +14,8 @@
  */
 #include <windows.h>
 
+#define EXPORT __declspec(dllexport)
+
 // char *newlispEvalStr(char *code);
 typedef char* (__stdcall *newlisp_eval_t)(const char *code);
 
@@ -50,11 +52,37 @@ DWORD WINAPI server_wrapper(LPVOID hmodule) {
 
   // Starts server, this thread will continue to operate
   // on a while (connection-is-stable-and-open) loop
-  newlisp_eval("(load \"daybreak/crescent.lsp\")");
+  newlisp_eval("(load \"daybreak/server.lsp\")");
 
   FreeLibrary(newlisp_handle);
   return 0;
 }
+
+//Keyboard Handle
+template <typename... Key>
+bool keys_pressed(Key... key) {
+  // Below is folding, meaning the left hand side is
+  // copied continuously to the right until no more arguments
+  // are left, and then it evaluates the entire line.
+  return ((GetAsyncKeyState(key) & 0x8000) && ...);
+}
+
+DWORD WINAPI keyboard_wrapper(LPVOID hmodule) {
+  while (true) {
+    // TODO only operate when window is in focues
+    // F4 || ctrl+j = configure controllers
+    // F3 || ctrl+t = trials
+    // shift + ctrl + l/; = lisp console
+    // shift + ctrl + j = load squirrel
+
+    if (keys_pressed(VK_CONTROL, 0x4B)) { // CTRL + K
+      if (newlisp_eval) newlisp_eval("(handle-controller-menu)");
+    }
+    Sleep(100); // prevent CPU overload
+  }
+  return 0;
+}
+
 
 // NOTE
 // DO _NOT_ run any remotely intensive processes within this method,
@@ -64,6 +92,7 @@ BOOL WINAPI DllMain(HMODULE hmodule, DWORD reason, LPVOID reserved) {
   switch (reason) {
     case DLL_PROCESS_ATTACH:
       CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)server_wrapper, hmodule, 0, 0);
+      CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)keyboard_wrapper, hmodule, 0, 0);
       break;
     case DLL_PROCESS_DETACH:
       // The newLISP server instance will exist even past closing MBAA.exe.

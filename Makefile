@@ -31,15 +31,14 @@ out:
 	cp /mingw32/bin/libwinpthread-1.dll out/libwinpthread-1.dll
 	cp crescent/newlisp.dll  out/daybreak/newlisp.dll
 	cp crescent/newlisp.exe  out/daybreak/newlisp.exe
-	cp crescent/crescent.lsp out/daybreak/crescent.lsp
+	cp crescent/server.lsp out/daybreak/server.lsp
 	cp crescent/client.lsp out/daybreak/client.lsp
 	./crescent/newlisp.exe -x crescent/client.lsp out/daybreak/client.exe
 	cp -r out/daybreak mbaa/daybreak
 	cp -r out/daybreak.exe mbaa/daybreak.exe
 
 test:
-	cd mbaa && ./daybreak.exe
-	./daybreak/client.exe
+	cd mbaa && ./daybreak.exe #./mbaa/daybreak/client.exe
 
 clean:
 	rm -rf mbaa/daybreak mbaa/daybreak.exe

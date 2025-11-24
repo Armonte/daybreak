@@ -10,12 +10,12 @@
 ;;;;
 
 (define (start-client)
-  (set 'socket (net-connect "localhost" 25565))
-  (set 'quit? nil)
+  (setq socket (net-connect "localhost" 25565))
+  (setq quit? nil)
 
   (while (not (or (net-error) quit?))
     (print "\ncrsc> ")
-    (set 'input (read-line))
+    (setq input (read-line))
     (if (= input "")
       (setq quit? true)
       (begin

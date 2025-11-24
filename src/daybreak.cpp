@@ -69,12 +69,11 @@ void Daybreak::spawn_process(const char *path) {
 
 void Daybreak::inject(std::string dll_path) {
   LPTHREAD_START_ROUTINE loadlib_fx = (LPTHREAD_START_ROUTINE)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "LoadLibraryW");
-  HANDLE melty_thread;
-  LPVOID buffer;
-
   std::wstring w_dll_path = std::wstring(dll_path.begin(), dll_path.end());
   size_t w_dll_len = (w_dll_path.length() + 1) * sizeof(wchar_t);
   int pid = MELTY_NOT_FOUND;
+  HANDLE melty_thread;
+  LPVOID buffer;
 
   debug_msg("Finding Melty...");
   while (!pid) pid = find_melty();
@@ -88,12 +87,13 @@ void Daybreak::inject(std::string dll_path) {
 
   WaitForSingleObject(melty_thread, INFINITE);
 
-  printf("hProcess:%p\nbuffer:%p\n", this->pi.hProcess, buffer);
+  debug_msg("hProcess: " + std::to_string((int)this->pi.hProcess) + "\nbuffer: " + std::to_string((int)buffer) + "\n");
   CloseHandle(melty_thread);
 }
 
 void Daybreak::skip_config() {
   // ASM hack that rewrites a jump call, skipping the configuration menu.
+  // Provided from CCCaster, https://github.com/Rhekar/CCCaster/blob/master/tools/Launcher.cpp#L171 
   static const char jmp1[]  = { (char)0xEB, (char)0x0E };
   static const char jmp2[] = { (char)0xEB };
 

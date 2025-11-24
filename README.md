@@ -10,7 +10,7 @@ for recompilation.
 ## Installation
 
 *Please compile using MinGW32*, see "Hacking & Modification" for more information.
-Currently, only the source is available. To compile,
+Currently of 23 Nov 2025, only the source is available. To compile,
 
 1. Download this repository
 2. run `download_deps.sh` to download MBAACC and newLISP
@@ -31,12 +31,12 @@ This project is dependent only on MinGW32. No UCRT or MSVC binaries or tools are
 development or compilation of Daybreak. Installing [MSYS2](https://www.msys2.org/)
 and the x86 gcc/g++ toolchain are the only requirements to get it working properly. 
 
-*The newLISP server provided in Daybreak listens to `localhost:25565`, and is currently hardcoded to listen here.*
-*client.lsp and its compiled client.exe will automatically look for this address and connect to each other.*
+The newLISP server provided in Daybreak listens to `localhost:25565`, and is currently hardcoded to listen here. Telnet works, but it does not support the pretty prompt that `server.lsp` provides. `client.lsp` and its compiled cohort `client.exe` will automatically look for this address and connect to it.
 
 ## Roadmap
 
 - Write text inside of Melty
+- Integrate squirrel-lang
 - Contain the newLISP client inside of Melty (open/closing by pressing a button combination)
 - Controller mappings
 - button test menu
